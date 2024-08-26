@@ -36,7 +36,7 @@ function Navbar() {
           </div>
         </div>
         <div className="navbar-center">
-          <a className="btn btn-ghost text-xl">daisyUI</a>
+          <a className="btn btn-ghost text-xl">ChatSolver</a>
         </div>
        
       </div>

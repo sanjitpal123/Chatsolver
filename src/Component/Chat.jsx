@@ -67,7 +67,7 @@ const Chat = () => {
       <div className="w-full fixed bottom-0 left-0 md:left-10 border-1 border-white bg-gray-600 text-white p-4 flex justify-center items-center gap-2">
         <textarea
           placeholder="Write Your Query Here..."
-          className="min-h-[50px] w-[60%] text-white bg-black p-2 resize-none overflow-y-auto rounded-[10px]"
+          className="min-h-[50px]w-[80%] md:w-[60%] text-white bg-black p-2 resize-none overflow-y-auto rounded-[10px]"
           rows="1"
           onKeyDown={handleKeyDown}
           onChange={handleChange}
