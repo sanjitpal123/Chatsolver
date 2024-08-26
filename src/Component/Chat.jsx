@@ -39,7 +39,7 @@ const Chat = () => {
   };
 
   return (
-    <div className="w-full min-h-[80vh] relative">
+    <div className="w-full min-h-[80vh] mt-[50px] md:mt-[0px] relative">
       <div className="min-h-[85%] bg-black overflow-y-scroll p-4 pb-[80px]">
         {AllQuestion.length > 0 ? (
           AllQuestion.map((element, index) => (
