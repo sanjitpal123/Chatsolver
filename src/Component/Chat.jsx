@@ -1,73 +1,84 @@
-import React, { useState } from 'react';
-import GetAnswer from '../assets/Services/FetchData';
+import React, { useState } from "react";
+import GetAnswer from "../assets/Services/FetchData";
 
 const Chat = () => {
   const [response, setResponse] = useState(null);
-  const [query, setQuery] = useState('');
-  const [Text, setText]=useState('');
+  const [query, setQuery] = useState("");
+  const [QuerText, SetQueryText] = useState("");
+  const [AllQuestion, SetQuestion] = useState([]);
+  const [Allanswer, SetAnswer] = useState([]);
 
-
-  const handleKeyDown = async (event) => {
-    if (event.key === 'Enter') {
-      setQuery("")
-      event.preventDefault(); 
-      setText('Loading...')
+  const submitQuery = async () => {
+    if (query.trim()) {
+      SetQueryText(query);
+      SetQuestion((prev) => [...prev, query]);
+      setQuery("");
       await fetchData();
-      
-     
-    
+    }
+  };
+
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      submitQuery();
     }
   };
 
   const handleChange = (event) => {
-  
     setQuery(event.target.value);
   };
 
-  
-
   const fetchData = async () => {
-    if (query.trim()) {
-      try {
-        const text = await GetAnswer(query);
-        console.log('API response:', text);
-
-        setResponse(text.split('*').join(''));
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
+    try {
+      const text = await GetAnswer(QuerText);
+      setResponse(text.split("*").join(""));
+      SetAnswer((prev) => [...prev, text.split("*").join("")]);
+    } catch (error) {
+      console.error("Error fetching data:", error);
     }
   };
 
-  
-  const askQuery = async () => {
-    setText('Loading...')
-    await fetchData();
-  };
-
   return (
-    <div className="w-full min-h-[60vh] flex justify-center items-center">
-      <div className="w-[40%] min-h-[50vh] text-white p-4">
-        <h1 className="text-3xl font-bold my-2">Welcome ChatQuery Application</h1>
-        <p className="my-2 mx-1">Ask Your Query</p>
+    <div className="w-full min-h-[60vh] relative">
+      <div className="min-h-[85%] bg-black overflow-y-scroll p-4 pb-[80px]">
+        {AllQuestion.length > 0 ? (
+          AllQuestion.map((element, index) => (
+            <div key={index} className="mb-4">
+              <div className="flex justify-end">
+                <div className="max-w-[75%] bg-purple-600 text-white rounded-lg p-3 shadow-lg">
+                  {element}
+                </div>
+              </div>
+
+              <div className="flex justify-start mt-2">
+                <div className="max-w-[75%] bg-gray-300 text-black rounded-lg p-3 shadow-lg">
+                  {Allanswer[index]}
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center text-gray-500">
+            No queries yet. Start the conversation!
+          </div>
+        )}
+      </div>
+
+      <div className="w-full fixed bottom-0 left-0 md:left-10 border-1 border-white  bg-gray-600 text-white p-4 flex justify-center items-center gap-2">
         <textarea
           placeholder="Write Your Query Here..."
-          className="w-full min-h-[50px] text-black p-2 resize-none overflow-y-auto rounded-[10px]"
-          rows="1" 
+          className="min-h-[50px] w-[60%] text-white bg-black p-2 resize-none overflow-y-auto rounded-[10px]"
+          rows="1"
           onKeyDown={handleKeyDown}
           onChange={handleChange}
-          value={query} 
+          value={query}
         ></textarea>
-        <button
-          className="mt-2 border-red-600 px-2 border-2 text-red-600 bg-black"
-          onClick={askQuery}
+        <div
+          onClick={submitQuery}
+          className="w-[40px] cursor-pointer h-[40px] rounded-full flex justify-center items-center bg-purple-500"
         >
-          Ask
-        </button>
-        <h2 className="mt-4 text-2xl">Response:</h2>
-        <p>
-          {response ? response : <div>{Text}</div>}
-        </p>
+          <i className="fa-solid fa-paper-plane text-white"></i>
+        </div>
       </div>
     </div>
   );
