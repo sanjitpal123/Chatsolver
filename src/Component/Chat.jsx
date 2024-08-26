@@ -1,19 +1,18 @@
 import React, { useState } from "react";
-import GetAnswer from "../assets/Services/FetchData";
+import GetAnswer from "../Services/FetchData";
 
 const Chat = () => {
   const [response, setResponse] = useState(null);
   const [query, setQuery] = useState("");
-  const [QuerText, SetQueryText] = useState("");
   const [AllQuestion, SetQuestion] = useState([]);
   const [Allanswer, SetAnswer] = useState([]);
 
   const submitQuery = async () => {
     if (query.trim()) {
-      SetQueryText(query);
       SetQuestion((prev) => [...prev, query]);
+      const currentQuery = query;
       setQuery("");
-      await fetchData();
+      await fetchData(currentQuery);
     }
   };
 
@@ -28,18 +27,19 @@ const Chat = () => {
     setQuery(event.target.value);
   };
 
-  const fetchData = async () => {
+  const fetchData = async (queryText) => {
     try {
-      const text = await GetAnswer(QuerText);
-      setResponse(text.split("*").join(""));
-      SetAnswer((prev) => [...prev, text.split("*").join("")]);
+      const text = await GetAnswer(queryText);
+      const cleanText = text.split("*").join("");
+      setResponse(cleanText);
+      SetAnswer((prev) => [...prev, cleanText]);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
 
   return (
-    <div className="w-full min-h-[60vh] relative">
+    <div className="w-full min-h-[80vh] relative">
       <div className="min-h-[85%] bg-black overflow-y-scroll p-4 pb-[80px]">
         {AllQuestion.length > 0 ? (
           AllQuestion.map((element, index) => (
@@ -52,7 +52,7 @@ const Chat = () => {
 
               <div className="flex justify-start mt-2">
                 <div className="max-w-[75%] bg-gray-300 text-black rounded-lg p-3 shadow-lg">
-                  {Allanswer[index]}
+                  {Allanswer[index] || "Loading..."}
                 </div>
               </div>
             </div>
@@ -64,7 +64,7 @@ const Chat = () => {
         )}
       </div>
 
-      <div className="w-full fixed bottom-0 left-0 md:left-10 border-1 border-white  bg-gray-600 text-white p-4 flex justify-center items-center gap-2">
+      <div className="w-full fixed bottom-0 left-0 md:left-10 border-1 border-white bg-gray-600 text-white p-4 flex justify-center items-center gap-2">
         <textarea
           placeholder="Write Your Query Here..."
           className="min-h-[50px] w-[60%] text-white bg-black p-2 resize-none overflow-y-auto rounded-[10px]"
