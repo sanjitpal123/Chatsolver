@@ -82,6 +82,7 @@ const Chat = () => {
         ) : (
           <div className="text-center text-gray-500">
             No queries yet. Start the conversation!
+            Sometimes it may provide wrong answer 
           </div>
         )}
       </div>
