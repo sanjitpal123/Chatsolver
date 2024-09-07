@@ -14,7 +14,7 @@ function SideBar() {
         <div className="overflow-y-auto">
           {AllQuestions.map((question, index) => (
             <div
-              className="w-[80%] min-h-[20px] bg-purple-600 mx-2 px-1 rounded-sm my-1 text-white"
+              className="w-[80%] min-h-[30px] bg-purple-600 mx-2 px-2 rounded-sm my-1 text-white"
               key={index}
             >
               {question}

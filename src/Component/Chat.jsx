@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import GetAnswer from "../Services/FetchData";
 import { Typewriter } from "react-simple-typewriter";
 import { MyContext } from "../Store/ContextStore";
@@ -8,7 +8,27 @@ const Chat = () => {
   const [response, setResponse] = useState(null);
   const [query, setQuery] = useState("");
   const [Allanswer, SetAnswer] = useState([]);
-  const[disable, setdisable]=useState()
+  const [disable, setDisable] = useState(false);
+  const [rvReady, setRvReady] = useState(false);
+  const [Play, SetPlay] = useState(false);
+
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src =
+      "https://code.responsivevoice.org/responsivevoice.js?key=Pj0JikQu";
+    script.async = true;
+
+    script.onload = () => {
+      console.log("ResponsiveVoice loaded successfully");
+      setRvReady(true);
+    };
+
+    script.onerror = () => {
+      console.error("Failed to load ResponsiveVoice script");
+    };
+
+    document.body.appendChild(script);
+  }, []);
 
   const submitQuery = async () => {
     if (query.trim()) {
@@ -32,14 +52,13 @@ const Chat = () => {
 
   const fetchData = async (queryText) => {
     try {
-      setdisable(false)
+      setDisable(false);
       const text = await GetAnswer(queryText);
       const cleanText = text.split("*").join("");
-      if(text)
-      {
-         setdisable(true)
+      if (text) {
+        setDisable(true);
       }
-      
+
       setResponse(cleanText);
       SetAnswer((prev) => [...prev, cleanText]);
     } catch (error) {
@@ -47,6 +66,48 @@ const Chat = () => {
     }
   };
 
+  const handleSpeak = (text, index) => {
+    const iconId = `icon-${index}`;
+    let i = document.querySelector(`#${iconId}`);
+
+    if (!Play) {
+      console.log("play", Play);
+      i.classList = "fa-solid fa-pause";
+
+      if ("speechSynthesis" in window) {
+        // Cancel any previous speech
+        speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.voice = speechSynthesis
+          .getVoices()
+          .find((voice) => voice.name === "Google UK English Female");
+        utterance.pitch = 1;
+        utterance.rate = 1;
+        utterance.volume = 1;
+
+        utterance.onend = () => {
+          SetPlay(false);
+          i.classList = "fa-solid fa-play";
+        };
+
+        speechSynthesis.speak(utterance);
+        console.log("Speaking text:", text);
+      }
+
+      SetPlay(true);
+    } else {
+      if (speechSynthesis.speaking && !speechSynthesis.paused) {
+        speechSynthesis.pause();
+        i.classList = "fa-solid fa-play";
+        SetPlay(false);
+      } else if (speechSynthesis.paused) {
+        speechSynthesis.resume();
+        i.classList = "fa-solid fa-pause";
+        SetPlay(true);
+      }
+    }
+  };
 
   return (
     <div className="w-full min-h-[85vh] mt-[50px] md:mt-[0px]">
@@ -61,28 +122,36 @@ const Chat = () => {
               </div>
 
               <div className="flex justify-start mt-2">
-                <div className="max-w-[75%] bg-gray-300 text-black rounded-lg p-3 shadow-lg">
-                  {Allanswer[index] ? (
-                    <Typewriter
-                      words={[Allanswer[index]]}
-                      loop={1}
-                      cursor
-                      cursorStyle=""
-                      typeSpeed={5} 
-                      deleteSpeed={50}
-                      delaySpeed={1000}
-                    />
-                  ) : (
-                    ""
-                  )}
-                </div>
+                {Allanswer[index] ? (
+                  <div className="flex flex-col">
+                    <div className="max-w-[75%] bg-gray-300 text-black rounded-lg p-3 shadow-lg">
+                      <Typewriter
+                        words={[Allanswer[index]]}
+                        loop={1}
+                        cursor
+                        cursorStyle=""
+                        typeSpeed={5}
+                        deleteSpeed={50}
+                        delaySpeed={1000}
+                      />
+                    </div>
+                    <button
+                      className="w-[30px] h-[30px] bg-white mt-2 rounded-full"
+                      onClick={() => handleSpeak(Allanswer[index], index)}
+                    >
+                      <i id={`icon-${index}`} className="fa-solid fa-play"></i>{" "}
+                    </button>
+                  </div>
+                ) : (
+                  ""
+                )}
               </div>
             </div>
           ))
         ) : (
           <div className="text-center text-gray-500">
-            No queries yet. Start the conversation!
-            Sometimes it may provide wrong answer 
+            No queries yet. Start the conversation! Sometimes it may provide the
+            wrong answer.
           </div>
         )}
       </div>
@@ -90,7 +159,9 @@ const Chat = () => {
       <div className="w-full fixed bottom-0 left-0 md:left-10 border-1 border-white bg-gray-600 text-white p-4 flex justify-center items-center gap-2">
         <textarea
           placeholder="Write Your Query Here..."
-          className={`  min-h-[50px] w-[80%] lg:w-[60%] text-white bg-black p-2 resize-none overflow-y-auto rounded-[10px] ${disable===true?"disabled": ''}`}
+          className={`min-h-[50px] w-[80%] lg:w-[60%] text-white bg-black p-2 resize-none overflow-y-auto rounded-[10px] ${
+            disable === true ? "disabled" : ""
+          }`}
           rows="1"
           onKeyDown={handleKeyDown}
           onChange={handleChange}
