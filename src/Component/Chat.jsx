@@ -7,7 +7,7 @@ const Chat = () => {
   const { AllQuestions, SetAllQuestions } = useContext(MyContext);
   const [response, setResponse] = useState(null);
   const [query, setQuery] = useState("");
-  const [Allanswer, SetAnswer] = useState([]);
+  const [Allanswer, SetAnswer] = useState([]); 
   const [disable, setDisable] = useState(false);
   const [rvReady, setRvReady] = useState(false);
   const [Play, SetPlay] = useState(false);
