@@ -2,6 +2,8 @@ import React, { useState, useContext, useEffect } from "react";
 import GetAnswer from "../Services/FetchData";
 import { Typewriter } from "react-simple-typewriter";
 import { MyContext } from "../Store/ContextStore";
+import { Hands } from "@mediapipe/hands";
+import { Camera } from "@mediapipe/camera_utils";
 
 const Chat = () => {
   const { AllQuestions, SetAllQuestions } = useContext(MyContext);
@@ -11,8 +13,11 @@ const Chat = () => {
   const [disable, setDisable] = useState(false);
   const [rvReady, setRvReady] = useState(false);
   const [Play, SetPlay] = useState(false);
+  const [isRecognizing, setIsRecognizing] = useState(false);
+  const [timeoutId, setTimeoutId] = useState(null);
 
   useEffect(() => {
+    // Load ResponsiveVoice
     const script = document.createElement("script");
     script.src =
       "https://code.responsivevoice.org/responsivevoice.js?key=Pj0JikQu";
@@ -28,7 +33,50 @@ const Chat = () => {
     };
 
     document.body.appendChild(script);
-  }, []);
+
+    // Setup MediaPipe Hands
+    const hands = new Hands({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
+    });
+
+    hands.setOptions({
+      maxNumHands: 1,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5,
+    });
+
+    hands.onResults((results) => {
+      if (results.multiHandLandmarks.length > 0) {
+        // Hand detected
+        if (!isRecognizing) {
+          console.log("Hand detected, starting voice recognition...");
+          startVoiceRecognition();
+        }
+      } else {
+        // No hand detected
+        if (isRecognizing) {
+          console.log("No hand detected, stopping voice recognition...");
+          stopVoiceRecognition();
+        }
+      }
+    });
+
+    const video = document.createElement('video');
+    const camera = new Camera(video, {
+      onFrame: async () => {
+        await hands.send({ image: video });
+      },
+      width: 640,
+      height: 480,
+    });
+
+    camera.start();
+
+    return () => {
+      camera.stop();
+    };
+  }, [isRecognizing]);
 
   const submitQuery = async () => {
     if (query.trim()) {
@@ -63,6 +111,70 @@ const Chat = () => {
       SetAnswer((prev) => [...prev, cleanText]);
     } catch (error) {
       console.error("Error fetching data:", error);
+    }
+  };
+
+  const startVoiceRecognition = () => {
+    if (!isRecognizing) {
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (SpeechRecognition) {
+        console.log("Initializing SpeechRecognition...");
+        const rec = new SpeechRecognition();
+        rec.lang = 'en-US';
+        rec.interimResults = false;
+
+        rec.onstart = () => {
+          console.log("Speech recognition started.");
+        };
+
+        rec.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          console.log('Voice recognized:', transcript);
+          // Handle the recognized voice input here
+        };
+
+        rec.onerror = (event) => {
+          console.error('Speech recognition error:', event.error);
+        };
+
+        rec.onend = () => {
+          console.log("Speech recognition ended.");
+          if (isRecognizing) {
+            startVoiceRecognition();
+          }
+        };
+
+        rec.start();
+        setIsRecognizing(true);
+
+        // Reset timeout if recognition is started
+        if (timeoutId) clearTimeout(timeoutId);
+
+        // Set timeout to stop recognition after 5 seconds of no speech
+        const id = setTimeout(() => {
+          stopVoiceRecognition();
+        }, 5000);
+        setTimeoutId(id);
+      } else {
+        console.error("SpeechRecognition API is not supported in this browser.");
+      }
+    }
+  };
+
+  const stopVoiceRecognition = () => {
+    if (isRecognizing) {
+      console.log("Stopping SpeechRecognition...");
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (SpeechRecognition) {
+        speechSynthesis.cancel();
+      }
+
+      setIsRecognizing(false);
+      if (timeoutId) clearTimeout(timeoutId);
     }
   };
 
